@@ -44,20 +44,22 @@ class RequestController extends Controller
     {        
         $data = $request->all();
         // dd($data);
-        $lastId = Payments::max('id');
-        if($lastId === null){
+        $lastNo = Payments::max('no');
+        if($lastNo === null){
             $id = 1;
         } else {
-            $id = $lastId + 1;
+            $id = $lastNo + 1;
         } 
 
+        $data['no'] = $id;
         $tanggal = $data['payment_date'];
         $tahun = date('Y');
         $month = Carbon::parse($tanggal)->format('m');
         $data['code'] = sprintf('%03d', $id) . '/KU/UPS-FAT/' . $month . '/' . $tahun;
 
-
+        // dd($data['no']);
         $kuitansi = new Payments();
+        $kuitansi->no = $data['no'];
         $kuitansi->code = $data['code'];
         $kuitansi->received_from = $data['received_from'];
         $kuitansi->for_payment = $data['for_payment'];
@@ -149,19 +151,22 @@ class RequestController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function show($id)
+    public function show($nomer)
     {
-        $filePath = 'pdfs/' . $id . '.pdf';
-        // dd($filePath);
-        if (Storage::disk('local')->exists($filePath)) {
+        $data = Payments::where('no', $nomer)->first();
+        if ($data) {
+            $filePath = 'pdfs/' . $nomer . '.pdf';
+            // dd($filePath);
+            if (Storage::disk('local')->exists($filePath)) {
 
-            // Dapatkan path lengkap file PDF
-            $fullPath = Storage::path($filePath);
-    
-            // Buat respons dengan konten file PDF
-            return response()->file($fullPath, [
-                'Content-Type' => 'application/pdf',
-            ]);
+                // Dapatkan path lengkap file PDF
+                $fullPath = Storage::path($filePath);
+        
+                // Buat respons dengan konten file PDF
+                return response()->file($fullPath, [
+                    'Content-Type' => 'application/pdf',
+                ]);
+            }
         }
 
     }
@@ -195,19 +200,24 @@ class RequestController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function delete($id)
+    public function delete($no)
     {
-
-        // dd($id);
-        $data = Payments::findOrFail($id);
-        $filePath = 'pdfs/' . $id . '.pdf';
-        // Check if the file exists
-        if (Storage::exists($filePath)) {
-            // Delete the file
-            Storage::delete($filePath);
+        $data = Payments::where('no', $no)->first();
+    
+        if ($data) {
+            $filePath = 'pdfs/' . $data->no . '.pdf';
+    
+            if (Storage::exists($filePath)) {
+                Storage::delete($filePath);
+            }
+    
+            $data->delete();
+    
+            notify()->success('Data Deleted Successfully');
+        } else {
+            notify()->error('Data Not Found');
         }
-        $data->delete();    
-        notify()->success('Data Deleted Successfully');
+    
         return redirect('/');
     }
 }
