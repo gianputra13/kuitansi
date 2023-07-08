@@ -33,14 +33,14 @@
               <tbody>
                 @foreach ($data as $item)
                   <tr class="{{ $loop->even ? 'bg-gray-100' : 'bg-white' }}">
-                    <td class="border-b border-gray-300 text-blue-500 flex flex-col group text-left">
+                    <td class="border-b border-gray-300 text-blue-500 flex flex-col group">
                       {{ $item->code }}
                       <span class="text-blue-500 text-sm opacity-0 group-hover:opacity-100">
                         <a href="{{ route('request.show', ['code' => $item->no]) }}" target="_blank">Cetak</a>
                         | <a class="text-red-500" href="{{ route('request.softDelete', ['id' => $item->no]) }}">Hapus</a></span>
                     </td>
-                    <td class="border-b border-gray-300  text-left">{{ $item->received_from }}</td>
-                    <td class="border-b border-gray-300  text-left">Rp {{ number_format($item->payment_number, 0, ',' , '.' )  }}</td>
+                    <td class="border-b border-gray-300">{{ $item->received_from }}</td>
+                    <td class="border-b border-gray-300">Rp {{ number_format($item->payment_number, 0, ',' , '.' )  }}</td>
                   </tr>
                 @endforeach
               </tbody>
