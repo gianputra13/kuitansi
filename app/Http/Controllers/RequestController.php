@@ -44,29 +44,41 @@ class RequestController extends Controller
     {        
         $data = $request->all();
         // dd($data);
-        $lastNo = Payments::max('no');
-        if($lastNo === null){
-            $id = 1;
-        } else {
-            $id = $lastNo + 1;
-        } 
 
-        $data['no'] = $id;
+        $tanggal = $data['payment_date'];
+        $carbonDate = Carbon::parse($tanggal);
+        $monthNumber = $carbonDate->format('n');
+        $lastMonth = Payments::max('month');
+
+        $lastNo = Payments::where('month', $monthNumber)
+        ->max('no');
+
+        
+        if ($lastNo) {
+            $no = $lastNo + 1;
+        } else {
+            $no = 1;
+        }
+        
+        $data['no'] = $no;
         $tanggal = $data['payment_date'];
         $tahun = date('Y');
         $month = Carbon::parse($tanggal)->format('m');
-        $data['code'] = sprintf('%03d', $id) . '/KU/UPS-FAT/' . $month . '/' . $tahun;
+        $data['month'] = $month;
+        $data['code'] = sprintf('%03d', $no) . '/KU/UPS-FAT/' . $month . '/' . $tahun;
 
         // dd($data['no']);
         $kuitansi = new Payments();
         $kuitansi->no = $data['no'];
         $kuitansi->code = $data['code'];
+        $kuitansi->month = $data['month'];
         $kuitansi->received_from = $data['received_from'];
         $kuitansi->for_payment = $data['for_payment'];
         $kuitansi->type_payment = $data['type_payment'];
         $kuitansi->payment_number = $data['payment_number'];
         $kuitansi->save();
 
+        $id = $kuitansi->id;
         // format nominal
         $formatter = new \NumberFormatter('id', \NumberFormatter::SPELLOUT);
         $data['payment_number_text'] = ucfirst($formatter->format($data['payment_number']) ." ". "rupiah");
@@ -132,7 +144,7 @@ class RequestController extends Controller
         // save pdf
         $output = $pdf->output();
         // $filename = $data['code'] . '.pdf';
-        $filePath = 'pdfs/' .$id . '.pdf';
+        $filePath = 'pdfs/' . $id . '.pdf';
         Storage::disk('local')->put($filePath, $output);
 
         $response = Response::make($output);
@@ -148,12 +160,12 @@ class RequestController extends Controller
     /**
      * Display the specified resource.
      *
-     * @param  int  $id
+     * @param  int  $no
      * @return \Illuminate\Http\Response
      */
     public function show($nomer)
     {
-        $data = Payments::where('no', $nomer)->first();
+        $data = Payments::where('id', $nomer)->first();
         if ($data) {
             $filePath = 'pdfs/' . $nomer . '.pdf';
             // dd($filePath);
@@ -200,12 +212,13 @@ class RequestController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function delete($no)
+    public function delete($id)
     {
-        $data = Payments::where('no', $no)->first();
-    
+
+        $data = Payments::where('id', $id)->first();
         if ($data) {
-            $filePath = 'pdfs/' . $data->no . '.pdf';
+
+            $filePath = 'pdfs/' . $data['id'] . '.pdf';
     
             if (Storage::exists($filePath)) {
                 Storage::delete($filePath);
