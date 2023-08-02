@@ -17,6 +17,7 @@ return new class extends Migration
             $table->id();
             $table->integer('no');
             $table->string('code');
+            $table->integer('month');
             $table->string('received_from');
             $table->string('for_payment');
             $table->string('type_payment');

@@ -48,8 +48,7 @@ class RequestController extends Controller
         $tanggal = $data['payment_date'];
         $carbonDate = Carbon::parse($tanggal);
         $monthNumber = $carbonDate->format('n');
-        $lastMonth = Payments::max('month');
-
+        
         $lastNo = Payments::where('month', $monthNumber)
         ->max('no');
 
@@ -61,7 +60,6 @@ class RequestController extends Controller
         }
         
         $data['no'] = $no;
-        $tanggal = $data['payment_date'];
         $tahun = date('Y');
         $month = Carbon::parse($tanggal)->format('m');
         $data['month'] = $month;
@@ -79,6 +77,7 @@ class RequestController extends Controller
         $kuitansi->save();
 
         $id = $kuitansi->id;
+
         // format nominal
         $formatter = new \NumberFormatter('id', \NumberFormatter::SPELLOUT);
         $data['payment_number_text'] = ucfirst($formatter->format($data['payment_number']) ." ". "rupiah");
